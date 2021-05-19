@@ -21,7 +21,6 @@ namespace BingusMod
             Logger = base.Logger;
 
             Assets.Init();
-            Hooks.Init();
         }
     }
 }

@@ -1,4 +1,8 @@
-﻿using System.Reflection;
+﻿/*
+ this is made with the custom item template because i'm lazy
+*/
+
+using System.Reflection;
 using R2API;
 using RoR2;
 using UnityEngine;
@@ -16,10 +20,7 @@ namespace BingusMod
 
         internal static void Init()
         {
-            // First registering your AssetBundle into the ResourcesAPI with a modPrefix that'll also be used for your prefab and icon paths
-            // note that the string parameter of this GetManifestResourceStream call will change depending on
-            // your namespace and file name
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("BingusMod.ror2bingus")) 
+            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("BingusMod.ror2bingus")) // this model is nightmare fuel
             {
                 var bundle = AssetBundle.LoadFromStream(stream);
 
@@ -46,23 +47,24 @@ namespace BingusMod
             bid.loreToken = "do not let its look fool you, it's a class-534 threat.";
             bid.tags = new[]
             {
-               ItemTag.Utility,
-                ItemTag.Damage
+                ItemTag.Utility
             };
           
 
-            var itemDisplayRules = new ItemDisplayRule[1]; // keep this null if you don't want the item to show up on the survivor 3d model. You can also have multiple rules !
-            itemDisplayRules[0].followerPrefab = BingusPrefab; // the prefab that will show up on the survivor
-            itemDisplayRules[0].childName = "Head";
-            itemDisplayRules[0].localScale = new Vector3(1f, 1f, 1f); // scale the model
-            itemDisplayRules[0].localAngles = new Vector3(-90f, 0f, 0f); // rotate the model
-            itemDisplayRules[0].localPos = new Vector3(0f, -0.25f, -0.34f); // position offset relative to the childName
+            var itemDisplayRules = new ItemDisplayRule[1];
+            itemDisplayRules[0].followerPrefab = BingusPrefab;
+            itemDisplayRules[0].childName = "Head"; // this is probably very stupid
+            itemDisplayRules[0].localScale = new Vector3(1f, 1f, 1f);
+            itemDisplayRules[0].localAngles = new Vector3(-90f, 0f, 0f);
+            // SinnamonFell i don't know how you did it but somehow it didnt rotate the model and scaled it up massively
+            itemDisplayRules[0].localPos = new Vector3(0f, -0.25f, -0.34f);
 
             var bingus = new R2API.CustomItem(BingusItemDef, itemDisplayRules);
 
             bool index = ItemAPI.Add(bingus);
+            bool debounce = false;
 
-            On.RoR2.HealthComponent.FixedUpdate += (orig, self) =>
+            On.RoR2.HealthComponent.FixedUpdate += (orig, self) => // everyone who has just saw this line is probably screaming at me now because it's probably catastrophically bad
             {
                 if (self.Equals(null) || self.body.isPlayerControlled == false) { orig(self); return; }
 
@@ -75,7 +77,7 @@ namespace BingusMod
                         debounce = true;
                         for (int i = 0; i <= body.inventory.GetItemCount(BingusItemDef); i++)
                         {
-                            var monster = new TeamComponent();
+                            var monster = new TeamComponent(); // placeholder
                             try
                             {
                                 if (TeamComponent.GetTeamMembers(TeamIndex.Monster).Count == 0) { orig(self); return; }
@@ -122,11 +124,6 @@ namespace BingusMod
             LanguageAPI.Add("BINGUS_PICKUP", "Entering low health state charms enemies");
             LanguageAPI.Add("BINGUS_DESC", "Entering low health state charms 2 enemies (+1 per stack), why? because they are stupid and think bingus squish is cute");
             LanguageAPI.Add("BINGUS_LORE", "do not let its look fool you, it's a class-534 threat.");
-        }
-        static bool debounce = false;
-        private static void Effects(HealthComponent self)
-        {
-            
         }
     }
 }
