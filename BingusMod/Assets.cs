@@ -49,7 +49,7 @@ namespace BingusMod
             {
                 ItemTag.Utility
             };
-          
+
 
             var itemDisplayRules = new ItemDisplayRule[1];
             itemDisplayRules[0].followerPrefab = BingusPrefab;
@@ -64,6 +64,11 @@ namespace BingusMod
 
             bool index = ItemAPI.Add(bingus);
             bool debounce = false;
+
+            On.RoR2.CharacterMaster.OnBodyDamaged += (orig, self, damageReport) => // i think i found a better way
+            {
+
+            };
 
             On.RoR2.HealthComponent.FixedUpdate += (orig, self) => // everyone who has just saw this line is probably screaming at me now because it's probably catastrophically bad
             {
@@ -83,7 +88,7 @@ namespace BingusMod
                             {
                                 if (TeamComponent.GetTeamMembers(TeamIndex.Monster).Count == 0) { orig(self); return; }
                                 monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
-                                if (monster.body.gameObject.transform == null) { continue; }
+                                if (monster.body.Equals(null)) { continue; }
                                 if (monster.body.master.isBoss == true)
                                 {
                                     monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
@@ -94,6 +99,14 @@ namespace BingusMod
 
                             monster.body.master.teamIndex = TeamIndex.Player;
                             monster.body.teamComponent.teamIndex = TeamIndex.Player;
+                            for(int j=0; j<TeamComponent.GetTeamMembers(TeamIndex.Player).Count; j++)
+                            {
+                                var ally = TeamComponent.GetTeamMembers(TeamIndex.Player)[j];
+                                var ai = ally.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
+                                if (ally.body.isPlayerControlled == true || ai.currentEnemy.characterBody.teamComponent.teamIndex==TeamIndex.Player) { Chat.AddMessage("Skipped"); continue; }
+                                ai.currentEnemy.Reset();
+                                ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
+                            }
                             baseAi.currentEnemy.Reset();
                             baseAi.ForceAcquireNearestEnemyIfNoCurrentEnemy();
                         }
@@ -102,19 +115,7 @@ namespace BingusMod
                     {
                         debounce = false;
                     }
-                    for (int i = 0; i < TeamComponent.GetTeamMembers(TeamIndex.Player).Count; i++)
-                    {
-                        var monster = TeamComponent.GetTeamMembers(TeamIndex.Player)[i];
-                        if (monster.body.isPlayerControlled == true || body.gameObject.transform != null) { continue; }
-                        var ai = monster.body.masterObject.GetComponent<RoR2.CharacterAI.BaseAI>();
-                        if (ai.currentEnemy.characterBody.teamComponent.teamIndex == TeamIndex.Player)
-                        {
-                            ai.currentEnemy.Reset();
-                            ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
-                        }
-                    }
                 }
-
                 orig(self);
             };
         }
