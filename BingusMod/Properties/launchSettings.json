@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BingusMod": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Risk of Rain 2\\Risk of Rain 2.exe"
+    }
+  }
+}

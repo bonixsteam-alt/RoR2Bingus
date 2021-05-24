@@ -3,6 +3,7 @@
 */
 
 using System.Reflection;
+using System.Collections;
 using R2API;
 using RoR2;
 using UnityEngine;
@@ -38,7 +39,7 @@ namespace BingusMod
             BingusItemDef = ScriptableObject.CreateInstance<ItemDef>();
             var bid = BingusItemDef;
             bid.name = "BINGUS";
-            bid.tier = ItemTier.Tier3;
+            bid.tier = ItemTier.Tier1; // I KEEP FORGETTING TO CHANGE THIS AFTER IM DONE TESTING
             bid.pickupModelPrefab = BingusPrefab;
             bid.pickupIconSprite = BingusIcon;
             bid.nameToken = "Bingus";
@@ -65,58 +66,77 @@ namespace BingusMod
             bool index = ItemAPI.Add(bingus);
             bool debounce = false;
 
-            On.RoR2.CharacterMaster.OnBodyDamaged += (orig, self, damageReport) => // i think i found a better way
+            On.RoR2.CharacterBody.OnTakeDamageServer += (orig, self, damageReport) => // i think i found a better way
             {
-
-            };
-
-            On.RoR2.HealthComponent.FixedUpdate += (orig, self) => // everyone who has just saw this line is probably screaming at me now because it's probably catastrophically bad
-            {
-                if (self.Equals(null) || self.body.isPlayerControlled == false) { orig(self); return; }
-
-                var body = self.body;
+                Chat.AddMessage("NO ŁOT JU DUŁING");
+                if (self.Equals(null) || self.isPlayerControlled == false) { orig(self, damageReport); }
+                var body = self; // im too lazy to replace the references
+                BossGroup bg = null;
+                try
+                {
+                    bg = BossGroup.FindBossGroup(self);
+                }
+                catch (System.NullReferenceException) { bg = null; }
+                
+                
                 if (body.inventory.GetItemCount(BingusItemDef) > 0)
                 {
-                    if (self.isHealthLow && debounce == false)
-                    {
-                        System.Random random = new System.Random();
+                    if (body.healthComponent.isHealthLow && !debounce)
+                    { 
                         debounce = true;
+                        System.Random random = new System.Random();
                         for (int i = 0; i <= body.inventory.GetItemCount(BingusItemDef); i++)
                         {
-                            var monster = new TeamComponent(); // placeholder
+                            var monster = new TeamComponent();
                             try
                             {
-                                if (TeamComponent.GetTeamMembers(TeamIndex.Monster).Count == 0) { orig(self); return; }
+                                // suspecto 1
+                                if (TeamComponent.GetTeamMembers(TeamIndex.Monster).Count == 0) { orig(self, damageReport); }
+                                // suspecto 1.1
                                 monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
-                                if (monster.body.Equals(null)) { continue; }
-                                if (monster.body.master.isBoss == true)
+                                // suspecto 1.2
+                                if (!monster.body) { continue; }
+                                // suspecto 1.3
+                                if (bg) // main sus
                                 {
+                                    Chat.AddMessage("when the if statement is sus?1!?!1/!/!/!/!//1?!?!?!?1!?!1/1/1/"); // the if statement was sus
                                     monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
                                 }
-                            }catch (System.ArgumentOutOfRangeException) { continue; }
-                            
+                                // if statement wasnt the sus
+                            }
+                            catch (System.ArgumentOutOfRangeException) {  continue; }
+                            Chat.AddMessage("suspecto 2");
+                            if (bg) { Chat.AddMessage(bg.combatSquad.readOnlyMembersList[1].name); }
+                            try { bg = BossGroup.FindBossGroup(self); }
+                            catch (System.NullReferenceException) { bg = null; }
+                            Chat.AddMessage("suspecto 3");
+                            if (bg) { continue; } // if statements have been ejected
                             var baseAi = monster.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
 
                             monster.body.master.teamIndex = TeamIndex.Player;
                             monster.body.teamComponent.teamIndex = TeamIndex.Player;
-                            for(int j=0; j<TeamComponent.GetTeamMembers(TeamIndex.Player).Count; j++)
+                            Chat.AddMessage("suspecto 4");
+                            if (!monster.body) { orig(self, damageReport); }
+                            /*for (int j = 0; j < TeamComponent.GetTeamMembers(TeamIndex.Player).Count; j++)
                             {
                                 var ally = TeamComponent.GetTeamMembers(TeamIndex.Player)[j];
                                 var ai = ally.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
-                                if (ally.body.isPlayerControlled == true || ai.currentEnemy.characterBody.teamComponent.teamIndex==TeamIndex.Player) { Chat.AddMessage("Skipped"); continue; }
+                                if (ally.body.isPlayerControlled == true || ai.currentEnemy.characterBody.teamComponent.teamIndex == TeamIndex.Player) { Chat.AddMessage("Skipped"); continue; }
                                 ai.currentEnemy.Reset();
                                 ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
-                            }
+                            }                               maybe this causes a NRE? 
+                            */
                             baseAi.currentEnemy.Reset();
                             baseAi.ForceAcquireNearestEnemyIfNoCurrentEnemy();
+                            Chat.AddMessage("suspecto wasnt the impoesr");
                         }
                     }
-                    if (!self.isHealthLow && debounce == true)
+                    if (!body.healthComponent.isHealthLow && debounce==true)
                     {
                         debounce = false;
                     }
                 }
-                orig(self);
+                orig(self, damageReport);
             };
         }
 
@@ -129,5 +149,3 @@ namespace BingusMod
         }
     }
 }
-
-    
