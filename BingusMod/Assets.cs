@@ -44,7 +44,7 @@ namespace BingusMod
             BingusItemDef = ScriptableObject.CreateInstance<ItemDef>();
             var bid = BingusItemDef;
             bid.name = "BINGUS";
-            bid.tier = ItemTier.Tier3;
+            bid.tier = ItemTier.Tier1; // tier 1 for testing purposes
             bid.pickupModelPrefab = BingusPrefab;
             bid.pickupIconSprite = BingusIcon;
             bid.nameToken = "Bingus";
@@ -62,7 +62,7 @@ namespace BingusMod
             itemDisplayRules[0].childName = "Head"; // this is probably very stupid
             itemDisplayRules[0].localScale = new Vector3(1f, 1f, 1f);
             itemDisplayRules[0].localAngles = new Vector3(-90f, 0f, 0f);
-            // SinnamonFell i don't know how you did it but somehow it didnt rotate the model and scaled it up massively
+            // SinnamonFell i don't know how you did it but somehow it didn't rotate the model and scaled it up massively
             // it looks like the model in the really early stages
             itemDisplayRules[0].localPos = new Vector3(0f, -0.25f, -0.34f);
 

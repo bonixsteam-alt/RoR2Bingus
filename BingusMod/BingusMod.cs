@@ -30,28 +30,27 @@ namespace BingusMod
             Logger = base.Logger;
 
             Assets.Init(Logger);
-
-
-            On.RoR2.HealthComponent.FixedUpdate += OnHealthFixedUpdate;
+            On.RoR2.CharacterBody.OnTakeDamageServer += (orig, self, damageReport) =>{ VerifyBody(orig, self, damageReport); };
         }
-
-        public static void OnHealthFixedUpdate(On.RoR2.HealthComponent.orig_FixedUpdate orig, HealthComponent self)
+        public static void VerifyBody(On.RoR2.CharacterBody.orig_OnTakeDamageServer orig, CharacterBody self, DamageReport damageReport)
         {
-            if (!self.Equals(null) && self.body.isPlayerControlled)
+            if (!self.Equals(null) && self.isPlayerControlled)
             {
-                int bingus_count = self.body.inventory.GetItemCount(Assets.BingusItemDef);
+                int bingus_count = self.inventory.GetItemCount(Assets.BingusItemDef);
                 if (bingus_count > 0)
                 {
+                    Chat.AddMessage("test 1");
                     DoBingus(bingus_count, self);
                 }
             }
 
-            orig(self);
+            orig(self, damageReport);
         }
 
-        public static void DoBingus(int bingus_count, HealthComponent self)
+        public static void DoBingus(int bingus_count, CharacterBody self)
         {
-            if (self.isHealthLow)
+            Chat.AddMessage("test 2");
+            if (self.healthComponent.isHealthLow)
             {
                 // we've already executed - skip...
                 if (debounce)
@@ -76,7 +75,7 @@ namespace BingusMod
                     TeamComponent monster = null;
                     foreach (var m in monsters_copy)
                     {
-                        if (!m.body.master.isBoss)
+                        if (!m.body.master.isBoss && BossGroup.FindBossGroup(m.body) is null)
                         {
                             Logger.Log(LogLevel.Debug, "Selected monster: " + m.body.master.name);
                             monster = m;
@@ -86,7 +85,7 @@ namespace BingusMod
 
                     // We were unable to find non-boss a monster to charm, lets just exit
                     // and try again later.
-                    if (monster == null)
+                    if (monster is null)
                     {
                         Logger.Log(LogLevel.Warning, "Unable to find a suitable mob to bingus.");
                         return;
