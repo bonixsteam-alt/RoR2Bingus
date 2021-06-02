@@ -3,7 +3,6 @@
 */
 
 using System.Reflection;
-using System.Collections;
 using R2API;
 using RoR2;
 using UnityEngine;
@@ -74,7 +73,7 @@ namespace BingusMod
                 BossGroup bg = null;
                 try
                 {
-                    bg = BossGroup.FindBossGroup(self);
+                    bg = self.master.GetComponent<BossGroup>();
                 }
                 catch (System.NullReferenceException) { bg = null; }
                 
@@ -107,7 +106,7 @@ namespace BingusMod
                             catch (System.ArgumentOutOfRangeException) {  continue; }
                             Chat.AddMessage("suspecto 2");
                             if (bg) { Chat.AddMessage(bg.combatSquad.readOnlyMembersList[1].name); }
-                            try { bg = BossGroup.FindBossGroup(self); }
+                            try { bg = monster.body.master.GetComponent<BossGroup>(); }
                             catch (System.NullReferenceException) { bg = null; }
                             Chat.AddMessage("suspecto 3");
                             if (bg) { continue; } // if statements have been ejected
