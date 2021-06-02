@@ -67,13 +67,13 @@ namespace BingusMod
 
             On.RoR2.CharacterBody.OnTakeDamageServer += (orig, self, damageReport) => // i think i found a better way
             {
-                Chat.AddMessage("NO ŁOT JU DUŁING");
-                if (self.Equals(null) || self.isPlayerControlled == false) { orig(self, damageReport); }
+                Chat.AddMessage("NO ŁOT JU DUŁING"); // this is a joke debug message
+                if (self is null || self.isPlayerControlled == false) { orig(self, damageReport); }
                 var body = self; // im too lazy to replace the references
-                BossGroup bg = null;
+                BossGroup bg;
                 try
                 {
-                    bg = self.master.GetComponent<BossGroup>();
+                    bg = BossGroup.FindBossGroup(self);
                 }
                 catch (System.NullReferenceException) { bg = null; }
                 
@@ -94,9 +94,9 @@ namespace BingusMod
                                 // suspecto 1.1
                                 monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
                                 // suspecto 1.2
-                                if (!monster.body) { continue; }
+                                if (monster.body is null) { continue; }
                                 // suspecto 1.3
-                                if (bg) // main sus
+                                if (!(bg is null)) // main sus
                                 {
                                     Chat.AddMessage("when the if statement is sus?1!?!1/!/!/!/!//1?!?!?!?1!?!1/1/1/"); // the if statement was sus
                                     monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
@@ -104,18 +104,16 @@ namespace BingusMod
                                 // if statement wasnt the sus
                             }
                             catch (System.ArgumentOutOfRangeException) {  continue; }
-                            Chat.AddMessage("suspecto 2");
-                            if (bg) { Chat.AddMessage(bg.combatSquad.readOnlyMembersList[1].name); }
-                            try { bg = monster.body.master.GetComponent<BossGroup>(); }
+                            try { bg = BossGroup.FindBossGroup(monster.body); }
                             catch (System.NullReferenceException) { bg = null; }
                             Chat.AddMessage("suspecto 3");
-                            if (bg) { continue; } // if statements have been ejected
+                            if (bg is null) { continue; } // if statements have been ejected
                             var baseAi = monster.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
-
+                            // if you're wondering why the comments are the way they are, don't ask
                             monster.body.master.teamIndex = TeamIndex.Player;
                             monster.body.teamComponent.teamIndex = TeamIndex.Player;
                             Chat.AddMessage("suspecto 4");
-                            if (!monster.body) { orig(self, damageReport); }
+                            if (monster.body is null) { orig(self, damageReport); }
                             /*for (int j = 0; j < TeamComponent.GetTeamMembers(TeamIndex.Player).Count; j++)
                             {
                                 var ally = TeamComponent.GetTeamMembers(TeamIndex.Player)[j];
@@ -124,6 +122,7 @@ namespace BingusMod
                                 ai.currentEnemy.Reset();
                                 ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
                             }                               maybe this causes a NRE? 
+                            nope.
                             */
                             baseAi.currentEnemy.Reset();
                             baseAi.ForceAcquireNearestEnemyIfNoCurrentEnemy();
