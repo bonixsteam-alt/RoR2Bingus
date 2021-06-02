@@ -2,7 +2,10 @@
  this is made with the custom item template because i'm lazy
 */
 
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
+using BepInEx.Logging;
 using R2API;
 using RoR2;
 using UnityEngine;
@@ -15,11 +18,14 @@ namespace BingusMod
         internal static Sprite BingusIcon;
 
         internal static ItemDef BingusItemDef;
+        internal static ManualLogSource Logger;
 
         private const string ModPrefix = "@BingusMod:";
 
-        internal static void Init()
+        internal static void Init(ManualLogSource Logger)
         {
+            Assets.Logger = Logger;
+
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("BingusMod.ror2bingus")) // this model is nightmare fuel
             {
                 var bundle = AssetBundle.LoadFromStream(stream);
@@ -28,12 +34,12 @@ namespace BingusMod
                 BingusIcon = bundle.LoadAsset<Sprite>("Assets/Import/bingus_icon/bingus_icon.png");
             }
 
-            BingusAsRedTierItem();
+            CreateBingusItem();
 
             AddLanguageTokens();
         }
 
-        private static void BingusAsRedTierItem()
+        private static void CreateBingusItem()
         {
             BingusItemDef = ScriptableObject.CreateInstance<ItemDef>();
             var bid = BingusItemDef;
@@ -62,61 +68,11 @@ namespace BingusMod
 
             var bingus = new R2API.CustomItem(BingusItemDef, itemDisplayRules);
 
-            bool index = ItemAPI.Add(bingus);
-            bool debounce = false;
-
-            On.RoR2.HealthComponent.FixedUpdate += (orig, self) => // everyone who has just saw this line is probably screaming at me now because it's probably catastrophically bad
+            if (!ItemAPI.Add(bingus))
             {
-                if (self.Equals(null) || self.body.isPlayerControlled == false) { orig(self); return; }
-
-                var body = self.body;
-                if (body.inventory.GetItemCount(BingusItemDef) > 0)
-                {
-                    if (self.isHealthLow && debounce == false)
-                    {
-                        System.Random random = new System.Random();
-                        debounce = true;
-                        for (int i = 0; i <= body.inventory.GetItemCount(BingusItemDef); i++)
-                        {
-                            var monster = new TeamComponent(); // placeholder
-                            try
-                            {
-                                if (TeamComponent.GetTeamMembers(TeamIndex.Monster).Count == 0) { orig(self); return; }
-                                monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
-                                if (monster.body.gameObject.transform == null) { continue; }
-                                if (monster.body.master.isBoss == true)
-                                {
-                                    monster = TeamComponent.GetTeamMembers(TeamIndex.Monster)[random.Next(1, TeamComponent.GetTeamMembers(TeamIndex.Monster).Count)];
-                                }
-                            }catch (System.ArgumentOutOfRangeException) { continue; }
-                            
-                            var baseAi = monster.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
-
-                            monster.body.master.teamIndex = TeamIndex.Player;
-                            monster.body.teamComponent.teamIndex = TeamIndex.Player;
-                            baseAi.currentEnemy.Reset();
-                            baseAi.ForceAcquireNearestEnemyIfNoCurrentEnemy();
-                        }
-                    }
-                    if (!self.isHealthLow && debounce == true)
-                    {
-                        debounce = false;
-                    }
-                    for (int i = 0; i < TeamComponent.GetTeamMembers(TeamIndex.Player).Count; i++)
-                    {
-                        var monster = TeamComponent.GetTeamMembers(TeamIndex.Player)[i];
-                        if (monster.body.isPlayerControlled == true || body.gameObject.transform != null) { continue; }
-                        var ai = monster.body.masterObject.GetComponent<RoR2.CharacterAI.BaseAI>();
-                        if (ai.currentEnemy.characterBody.teamComponent.teamIndex == TeamIndex.Player)
-                        {
-                            ai.currentEnemy.Reset();
-                            ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
-                        }
-                    }
-                }
-
-                orig(self);
-            };
+                BingusItemDef = null;
+                Assets.Logger.LogError("Unable to add bingus item");
+            }
         }
 
         private static void AddLanguageTokens()
