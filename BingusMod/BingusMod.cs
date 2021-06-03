@@ -17,7 +17,7 @@ namespace BingusMod
     [BepInPlugin(ModGuid, ModName, ModVer)]
     public class CustomItem : BaseUnityPlugin
     {
-        private const string ModVer = "1.0.4";
+        private const string ModVer = "1.1";
         private const string ModName = "Bingus Mod";
         public const string ModGuid = "com.bonix.bingusmod";
 
