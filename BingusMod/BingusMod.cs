@@ -1,7 +1,14 @@
-﻿using BepInEx;
+﻿using System;
+using System.Linq;
+using System.Collections.Generic;
+
+using BepInEx;
 using BepInEx.Logging;
 using R2API;
 using R2API.Utils;
+
+using RoR2;
+
 
 namespace BingusMod
 {
@@ -10,17 +17,107 @@ namespace BingusMod
     [BepInPlugin(ModGuid, ModName, ModVer)]
     public class CustomItem : BaseUnityPlugin
     {
-        private const string ModVer = "1.0.3";
+        private const string ModVer = "1.0.4";
         private const string ModName = "Bingus Mod";
         public const string ModGuid = "com.bonix.bingusmod";
 
         internal new static ManualLogSource Logger;
 
+        private static Random random = new Random();
+        private static bool debounce = false;
         public void Awake()
         {
             Logger = base.Logger;
 
-            Assets.Init();
+            Assets.Init(Logger);
+            On.RoR2.CharacterBody.OnTakeDamageServer += (orig, self, damageReport) =>{ VerifyBody(orig, self, damageReport); };
+        }
+        public static void VerifyBody(On.RoR2.CharacterBody.orig_OnTakeDamageServer orig, CharacterBody self, DamageReport damageReport)
+        {
+            if (!self.Equals(null) && self.isPlayerControlled)
+            {
+                int bingus_count = self.inventory.GetItemCount(Assets.BingusItemDef);
+                if (bingus_count > 0)
+                {
+                    DoBingus(bingus_count, self);
+                }
+            }
+
+            orig(self, damageReport);
+        }
+
+        public static void DoBingus(int bingus_count, CharacterBody self)
+        {
+            if (self.healthComponent.isHealthLow)
+            {
+                // we've already executed - skip...
+                if (debounce)
+                {
+                    return;
+                }
+
+                debounce = true;
+                for (int i = 0; i <= bingus_count; i++)
+                {
+                    var monsters = TeamComponent.GetTeamMembers(TeamIndex.Monster);
+                    if (monsters.Count == 0) // nothing to charm
+                    {
+                        return;
+                    }
+
+                    // copy our monsters list into a randomly sorted order
+                    // it's O(n), but it's the best we can really do here...
+                    var monsters_copy = new List<TeamComponent>(monsters).OrderBy(x => random.Next()).ToList();
+
+                    // grab our random monster that's not a boss
+                    TeamComponent monster = null;
+                    foreach (var m in monsters_copy)
+                    {
+                        if (!m.body.master.isBoss && BossGroup.FindBossGroup(m.body) is null)
+                        {
+                            Logger.Log(LogLevel.Debug, "Selected monster: " + m.body.master.name);
+                            monster = m;
+                            break;
+                        }
+                    }
+
+                    // We were unable to find non-boss a monster to charm, lets just exit
+                    // and try again later.
+                    if (monster is null)
+                    {
+                        Logger.Log(LogLevel.Warning, "Unable to find a suitable mob to bingus.");
+                        return;
+                    }
+
+                    // Assign to player team
+                    monster.body.master.teamIndex = TeamIndex.Player;
+                    monster.body.teamComponent.teamIndex = TeamIndex.Player;
+
+                    // Reset aggro
+                    var baseAi = monster.body.master.GetComponent<RoR2.CharacterAI.BaseAI>();
+                    baseAi.currentEnemy.Reset();
+                    baseAi.ForceAcquireNearestEnemyIfNoCurrentEnemy();
+                }
+
+                // reset drone aggro if needed
+                var players = TeamComponent.GetTeamMembers(TeamIndex.Player);
+                foreach (var player in players)
+                {
+                    if (!player.body.isPlayerControlled)
+                    {
+                        var ai = player.body.masterObject.GetComponent<RoR2.CharacterAI.BaseAI>();
+                        if (ai.currentEnemy.characterBody.teamComponent.teamIndex == TeamIndex.Player)
+                        {
+                            ai.currentEnemy.Reset();
+                            ai.ForceAcquireNearestEnemyIfNoCurrentEnemy();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                debounce = false;
+            }
         }
     }
 }
