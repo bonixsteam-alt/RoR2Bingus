@@ -44,7 +44,7 @@ namespace BingusMod
             BingusItemDef = ScriptableObject.CreateInstance<ItemDef>();
             var bid = BingusItemDef;
             bid.name = "BINGUS";
-            bid.tier = ItemTier.Tier1; // tier 1 for testing purposes
+            bid.tier = ItemTier.Tier3;
             bid.pickupModelPrefab = BingusPrefab;
             bid.pickupIconSprite = BingusIcon;
             bid.nameToken = "Bingus";
