@@ -55,16 +55,15 @@ namespace BingusMod
             {
                 ItemTag.Utility
             };
-          
 
             var itemDisplayRules = new ItemDisplayRule[1];
             itemDisplayRules[0].followerPrefab = BingusPrefab;
-            itemDisplayRules[0].childName = "Head"; // this is probably very stupid
+            itemDisplayRules[0].childName = "Chest";
             itemDisplayRules[0].localScale = new Vector3(1f, 1f, 1f);
             itemDisplayRules[0].localAngles = new Vector3(-90f, 0f, 0f);
             // SinnamonFell i don't know how you did it but somehow it didn't rotate the model and scaled it up massively
             // it looks like the model in the really early stages
-            itemDisplayRules[0].localPos = new Vector3(0f, -0.25f, -0.34f);
+            itemDisplayRules[0].localPos = new Vector3(0f, 0.3f, -0.4f);
 
             var bingus = new R2API.CustomItem(BingusItemDef, itemDisplayRules);
 

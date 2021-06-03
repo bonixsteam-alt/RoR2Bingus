@@ -39,7 +39,6 @@ namespace BingusMod
                 int bingus_count = self.inventory.GetItemCount(Assets.BingusItemDef);
                 if (bingus_count > 0)
                 {
-                    Chat.AddMessage("test 1");
                     DoBingus(bingus_count, self);
                 }
             }
@@ -49,7 +48,6 @@ namespace BingusMod
 
         public static void DoBingus(int bingus_count, CharacterBody self)
         {
-            Chat.AddMessage("test 2");
             if (self.healthComponent.isHealthLow)
             {
                 // we've already executed - skip...
